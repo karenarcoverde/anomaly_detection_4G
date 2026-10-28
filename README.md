@@ -2,32 +2,32 @@
 
 ## Problem Description
 
-This project addresses Kaggle's [Anomaly Detection in 4G Cellular Networks](https://www.kaggle.com/competitions/anomaly-detection-in-4g-cellular-networks/discussion?sort=recent-comments) competition. The goal is to identify unusual observations in 4G cellular network performance data. Each row represents an observation associated with a network cell and a time, along with numerical metrics. In the training set, the `Unusual` column indicates whether an observation is normal (`0`) or unusual (`1`).
+This project addresses Kaggle's [Anomaly Detection in 4G Cellular Networks](https://www.kaggle.com/competitions/anomaly-detection-in-4g-cellular-networks/discussion?sort=recent-comments) competition. Cellular networks are often provisioned to handle peak demand, which can leave radio resources underused at other times. Predicting changes in user traffic can help an operator manage energy and frequency resources more efficiently. The goal of this problem is to detect unusual network activity that could motivate reconfiguring a base station.
+
+Each row represents a sample from one cell at a particular time. The data comes from a real LTE deployment: measurements were collected every 15 minutes across base stations, each with a different number of cells. The training label `Unusual` distinguishes normal activity (`0`), consistent with the behavior typically observed for that time of day, from unusual activity (`1`), which deviates from that behavior. Unusual activity may be associated with events such as strikes, demonstrations, or sports events and may warrant a change in base-station configuration.
 
 The solution explores the data, converts time into a numeric feature, and compares classification models using hyperparameter search and cross-validation. Since unusual observations may be less frequent, evaluation includes F1, ROC-AUC, PR-AUC, precision and recall. The classification threshold is selected based on the F1 score from out-of-fold predictions. The practical goal is to produce a classification for each row in the test set in the competition's submission format.
 
 ### Column descriptions
 
-`UL` means uplink (device-to-network traffic), `DL` means downlink (network-to-device traffic), and `UE` means user equipment, such as a mobile device. The CSV files contain the following columns:
+`UL` means uplink (device-to-network traffic), `DL` means downlink (network-to-device traffic), and `UE` means user equipment, such as a mobile device. Traffic and resource-usage metrics describe the 15-minute measurement interval. The CSV files contain the following columns:
 
 | Column | Description |
 | --- | --- |
-| `Time` | Observation time in `HH:MM` format. |
-| `CellName` | Identifier of the cellular network cell associated with the observation. |
-| `PRBUsageUL` | Physical Resource Block (PRB) usage for uplink traffic. |
-| `PRBUsageDL` | Physical Resource Block (PRB) usage for downlink traffic. |
-| `meanThr_DL` | Mean downlink throughput. |
-| `meanThr_UL` | Mean uplink throughput. |
-| `maxThr_DL` | Maximum downlink throughput. |
-| `maxThr_UL` | Maximum uplink throughput. |
-| `meanUE_DL` | Mean number of UEs associated with downlink traffic. |
-| `meanUE_UL` | Mean number of UEs associated with uplink traffic. |
-| `maxUE_DL` | Maximum number of UEs associated with downlink traffic. |
-| `maxUE_UL` | Maximum number of UEs associated with uplink traffic. |
-| `maxUE_UL+DL` | Combined maximum UE count for uplink and downlink, as provided in the dataset. |
+| `Time` | Time of day when the sample was generated, in `HH:MM` format. |
+| `CellName` | Text identifier of the cell that generated the sample. The competition description calls this field `CellName1`; the CSV and notebook use `CellName`. The identifier encodes the base station and the cell within it. |
+| `PRBUsageUL` | Percentage of uplink Physical Radio Blocks (PRBs) in use during the previous 15 minutes. |
+| `PRBUsageDL` | Percentage of downlink Physical Radio Blocks (PRBs) in use during the previous 15 minutes. |
+| `meanThr_DL` | Average downlink traffic carried during the previous 15 minutes, in Mbps. |
+| `meanThr_UL` | Average uplink traffic carried during the previous 15 minutes, in Mbps. |
+| `maxThr_DL` | Maximum downlink traffic measured during the previous 15 minutes, in Mbps. |
+| `maxThr_UL` | Maximum uplink traffic measured during the previous 15 minutes, in Mbps. |
+| `meanUE_DL` | Average number of user equipment (UE) devices simultaneously active for downlink during the previous 15 minutes. |
+| `meanUE_UL` | Average number of UE devices simultaneously active for uplink during the previous 15 minutes. |
+| `maxUE_DL` | Maximum number of UE devices simultaneously active for downlink during the previous 15 minutes. |
+| `maxUE_UL` | Maximum number of UE devices simultaneously active for uplink during the previous 15 minutes. |
+| `maxUE_UL+DL` | Maximum number of UE devices simultaneously active during the previous 15 minutes, regardless of uplink or downlink. |
 | `Unusual` | Training target: `1` for an unusual observation and `0` otherwise. This column is not present in the test file. |
-
-The notebook does not specify the measurement units for the throughput or PRB usage fields; use the competition's data description for their exact units.
 
 ## Data
 
@@ -49,3 +49,5 @@ kaggle competitions download -c anomaly-detection-in-4g-cellular-networks
 ```
 
 Extract the downloaded ZIP file into the project folder. If the competition is unavailable to your account through the CLI, download the data from the competition page after accepting the rules.
+
+The notebook is for local project execution only. Do not include or upload a notebook as part of the competition submission; submit only the required CSV file.
