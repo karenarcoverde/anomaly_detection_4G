@@ -15,7 +15,7 @@ The solution explores the data, converts time into a numeric feature, and compar
 | Column | Description |
 | --- | --- |
 | `Time` | Time of day when the sample was generated, in `HH:MM` format. |
-| `CellName` | Text identifier of the cell that generated the sample. |
+| `CellName` | Text identifier of the cell that generated the sample. The competition description calls this field `CellName1`; the CSV and notebook use `CellName`. The identifier encodes the base station and the cell within it. |
 | `PRBUsageUL` | Percentage of uplink Physical Radio Blocks (PRBs) in use during the previous 15 minutes. |
 | `PRBUsageDL` | Percentage of downlink Physical Radio Blocks (PRBs) in use during the previous 15 minutes. |
 | `meanThr_DL` | Average downlink traffic carried during the previous 15 minutes, in Mbps. |
@@ -51,3 +51,47 @@ kaggle competitions download -c anomaly-detection-in-4g-cellular-networks
 Extract the downloaded ZIP file into the project folder. If the competition is unavailable to your account through the CLI, download the data from the competition page after accepting the rules.
 
 The notebook is for local project execution only. Do not include or upload a notebook as part of the competition submission; submit only the required CSV file.
+
+## Environment setup
+
+Use Python 3.9 or newer. From the project folder, create and activate a virtual environment, then install the dependencies:
+
+**Windows (PowerShell):**
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+**macOS/Linux:**
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+When the environment is active, its name (usually `.venv`) appears in the terminal prompt. To leave it, run:
+
+```bash
+deactivate
+```
+
+## Train and save the final model with BentoML
+
+With the virtual environment active and the training CSV in the project folder, run:
+
+```bash
+python train.py
+```
+
+By default, the script reads `ML-MATT-CompetitionQT2021_train.csv` from the project folder. To use a different location or BentoML model name:
+
+```bash
+python train.py --data path/to/ML-MATT-CompetitionQT2021_train.csv --model-name anomaly_detection_4g_lgbm
+```
+
+The script applies the notebook's data preparation, chooses the classification threshold from three-fold out-of-fold predictions, then fits the selected LightGBM configuration on all cleaned training rows. BentoML saves the trained model in its local model store; the command prints the resulting model tag. The saved model also includes the chosen threshold and ordered feature names as custom objects.
