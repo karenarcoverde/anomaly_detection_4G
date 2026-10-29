@@ -1,10 +1,8 @@
 """Serve the trained anomaly detector as a BentoML CSV upload API."""
 
-import argparse
 import os
 from functools import lru_cache
 from io import BytesIO
-from pathlib import Path
 from typing import Any, BinaryIO, Dict, List
 
 import bentoml
@@ -13,11 +11,8 @@ import pandas as pd
 from bentoml.io import File
 
 
-PROJECT_DIR = Path(__file__).resolve().parent
 DEFAULT_MODEL_TAG = "anomaly_detection_4g_lgbm:latest"
 MODEL_TAG = os.environ.get("BENTOML_MODEL_TAG", DEFAULT_MODEL_TAG)
-TEST_FILENAME = "ML-MATT-CompetitionQT2021_test.csv"
-OUTPUT_SUFFIX = "_predicted"
 PREDICTION_COLUMN = "Unusual"
 HOUR_COLUMN = "Hour"
 
@@ -92,54 +87,6 @@ def add_predictions(
     return predicted_data
 
 
-def create_predicted_file(
-    test_path: Path, output_path: Path, model_tag: str
-) -> None:
-    """Predict the test CSV and save a copy with a prediction column."""
-    if not test_path.is_file():
-        raise FileNotFoundError("Test CSV not found: {}".format(test_path))
-
-    test_data = pd.read_csv(test_path, sep=";")
-    model, threshold, feature_names = load_model(model_tag)
-    predicted_data = add_predictions(
-        test_data, model, threshold, feature_names
-    )
-    predicted_data.to_csv(output_path, sep=";", index=False)
-    print(
-        "Saved {} predictions for {} rows to {}".format(
-            len(predicted_data), len(test_data), output_path
-        )
-    )
-
-
-def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Generate predictions for the competition test CSV."
-    )
-    parser.add_argument(
-        "--data",
-        type=Path,
-        default=PROJECT_DIR / TEST_FILENAME,
-        help="Path to the test CSV (default: %(default)s).",
-    )
-    parser.add_argument(
-        "--output",
-        type=Path,
-        default=None,
-        help="Path for the output CSV (default: input filename with _predicted suffix).",
-    )
-    parser.add_argument(
-        "--model-tag",
-        default=MODEL_TAG,
-        help="BentoML model tag (default: %(default)s).",
-    )
-    args = parser.parse_args()
-    output_path = args.output or args.data.with_name(
-        "{}{}{}".format(args.data.stem, OUTPUT_SUFFIX, args.data.suffix)
-    )
-    create_predicted_file(args.data, output_path, args.model_tag)
-
-
 service = bentoml.legacy.Service("anomaly-detection-4g", runners=[])
 
 
@@ -157,7 +104,3 @@ def predict(input_file: BinaryIO) -> BytesIO:
         test_data, model, threshold, feature_names
     )
     return BytesIO(predicted_data.to_csv(sep=";", index=False).encode("utf-8"))
-
-
-if __name__ == "__main__":
-    main()

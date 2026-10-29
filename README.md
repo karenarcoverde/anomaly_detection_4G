@@ -96,25 +96,6 @@ python train.py --data path/to/ML-MATT-CompetitionQT2021_train.csv --model-name 
 
 The script applies the notebook's data preparation, chooses the classification threshold from three-fold out-of-fold predictions, then fits the selected LightGBM configuration on all cleaned training rows. BentoML saves the trained model in its local model store; the command prints the resulting model tag. The saved model also includes the chosen threshold and ordered feature names as custom objects.
 
-## Generate predictions from the test CSV
-
-After training, generate a new CSV using the test CSV in the project folder.
-The output preserves the test rows and columns, adds an `Unusual` column, and
-uses the original semicolon separator:
-
-```powershell
-python predict.py
-```
-
-By default, the script reads `ML-MATT-CompetitionQT2021_test.csv`, loads
-`anomaly_detection_4g_lgbm:latest` from BentoML's model store, and writes
-`ML-MATT-CompetitionQT2021_test_predicted.csv`. To change the input, output,
-or model tag:
-
-```powershell
-python predict.py --data path/to/test.csv --output path/to/test_predicted.csv --model-tag anomaly_detection_4g_lgbm:latest
-```
-
 ## Serve predictions with BentoML
 
 After training the model, start the BentoML API from the project folder:
