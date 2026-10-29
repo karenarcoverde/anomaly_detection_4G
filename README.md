@@ -15,7 +15,7 @@ The solution explores the data, converts time into a numeric feature, and compar
 | Column | Description |
 | --- | --- |
 | `Time` | Time of day when the sample was generated, in `HH:MM` format. |
-| `CellName` | Text identifier of the cell that generated the sample. The competition description calls this field `CellName1`; the CSV and notebook use `CellName`. The identifier encodes the base station and the cell within it. |
+| `CellName` | Text identifier of the cell that generated the sample. The identifier encodes the base station and the cell within it. |
 | `PRBUsageUL` | Percentage of uplink Physical Radio Blocks (PRBs) in use during the previous 15 minutes. |
 | `PRBUsageDL` | Percentage of downlink Physical Radio Blocks (PRBs) in use during the previous 15 minutes. |
 | `meanThr_DL` | Average downlink traffic carried during the previous 15 minutes, in Mbps. |
