@@ -180,3 +180,108 @@ docker run --rm --name anomaly-4g-api -p 3000:3000 anomaly-4g:latest serve
 With the container running, open `http://localhost:3000` to access the API interface. 
 
 To stop the container, press Ctrl+C in the terminal where it is running.
+
+---
+
+## Cloud Deployment — Local Kubernetes (Docker Desktop)
+
+The BentoML inference API is deployed to a **local Kubernetes cluster** using
+Docker Desktop. The deployment runs the `anomaly-4g:latest` container image and
+exposes the BentoML HTTP server, which listens on **port 3000** inside the Pod.
+The API is accessed locally through Kubernetes port forwarding on **port 8502**.
+
+> **Deployment scope:** This is a local Kubernetes deployment, not a publicly
+> hosted cloud service. It demonstrates Kubernetes orchestration and a working
+> inference endpoint without requiring a cloud provider.
+
+### Prerequisites
+
+- Docker Desktop running on Windows, with Kubernetes enabled and the local
+  `docker-desktop` context available.
+- The Docker image `anomaly-4g:latest` already built, as described above.
+- `kubectl` installed and accessible from PowerShell.
+- The Docker image must be available to the Kubernetes node. For a Docker
+  Desktop cluster using the Docker image store, `imagePullPolicy: Never` allows
+  the local image to be used. Other cluster types, including `kind`, may need
+  the image to be loaded into their nodes first.
+
+### Kubernetes deployment configuration
+
+The Kubernetes manifest is stored in [`k8s/deployment.yaml`](k8s/deployment.yaml).
+It defines:
+
+- A **Deployment** named `anomaly-4g` with one replica of the inference API.
+- A **ClusterIP Service** named `anomaly-4g` routing to container port `3000`.
+
+### Deploy and verify
+
+From the repository root, run in PowerShell:
+
+```powershell
+kubectl config use-context docker-desktop
+kubectl apply -f k8s/deployment.yaml
+kubectl rollout status deployment/anomaly-4g
+kubectl get pods
+kubectl get services
+```
+
+**Observed result:** Docker Desktop shows an active local **kubeadm** Kubernetes
+cluster with **one node** (Kubernetes v1.36.1). The `anomaly-4g` Deployment is
+**Available** with **1/1** Pods, and the Pod status is **Running**.
+
+![Docker Desktop Kubernetes dashboard showing the active kubeadm cluster, available deployment, and running Pod](docs/images/docker-desktop-kubernetes-cluster.png)
+
+*Figure 1 — Docker Desktop confirms that the local Kubernetes cluster is active, the `anomaly-4g` Deployment is available (1/1), and its Pod is running.*
+
+The PowerShell verification also showed `READY 1/1`, `STATUS Running`, and `0`
+restarts:
+
+![Kubernetes Pod with READY 1/1 and STATUS Running](docs/images/kubernetes-pod-running.png)
+
+*Figure 2 — `kubectl get pods` confirms the anomaly detection API is running in the local Kubernetes cluster.*
+
+### Access the API
+
+Forward local port `8502` to the Kubernetes Service's port `3000`:
+
+```powershell
+kubectl port-forward service/anomaly-4g 8502:3000
+```
+
+Leave this terminal open and visit **http://localhost:8502**. The BentoML API
+interface documents the project and lists the `/predict` inference endpoint.
+
+![BentoML API interface served through Kubernetes](docs/images/bentoml-api-interface.png)
+
+*Figure 3 — The BentoML inference API is accessible through Kubernetes port forwarding at `localhost:8502`.*
+
+### Test the prediction endpoint
+
+The API accepts a test CSV file and returns CSV data with an `Unusual` prediction
+column. You can test the `POST /predict` endpoint in the BentoML browser
+interface (**Try it out → Choose file → Execute**) or from another PowerShell
+terminal:
+
+```powershell
+curl.exe -X POST "http://localhost:8502/predict" -H "accept: text/csv" -H "Content-Type: */*" --data-binary "@ML-MATT-CompetitionQT2021_test.csv" -o predictions.csv
+```
+
+The test shown below returned **HTTP 200**, and the response body contained CSV
+rows with the predicted `Unusual` column.
+
+![Successful POST predict test and HTTP 200 response](docs/images/bentoml-prediction-success.png)
+
+*Figure 4 — Successful inference request to `POST /predict` with an HTTP 200 response and CSV predictions.*
+
+### Useful troubleshooting commands
+
+```powershell
+kubectl get pods
+kubectl logs deployment/anomaly-4g --tail=50
+kubectl describe deployment anomaly-4g
+```
+
+If port forwarding reports `connection refused`, verify that the application is
+listening on port `3000` and that the Kubernetes Service's `targetPort` is also
+`3000`. If the Pod reports `ErrImageNeverPull`, confirm that the image is
+available to the Kubernetes node.
