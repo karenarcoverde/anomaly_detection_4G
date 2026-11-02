@@ -116,8 +116,67 @@ bentoml serve predict:service --reload
 
 Upload a CSV file as a multipart file to `http://localhost:3000/predict`. The
 response is the original CSV with predictions appended in the `Unusual`
-column. For example, in PowerShell with `curl.exe`:
+column. 
+
+## Build the Bento and Docker Image
 
 ```powershell
-curl.exe -X POST http://localhost:3000/predict -F "file=@ML-MATT-CompetitionQT2021_test.csv" -o ML-MATT-CompetitionQT2021_test_predicted.csv
+bentoml build
+bentoml list
 ```
+
+### Windows Troubleshooting: CRLF Line Endings
+
+On some Windows environments, BentoML may generate shell scripts such as `install.sh` using Windows-style line endings (CRLF) instead of Unix-style line endings (LF).
+
+This may cause the following error when building the Docker image:
+
+```text
+set: pipefail: invalid option name
+exit code: 2
+```
+
+To fix this issue, run the following command in PowerShell after `bentoml build` and before `bentoml containerize`:
+
+```powershell
+@'
+from pathlib import Path
+import bentoml
+
+bento = bentoml.get("anomaly-detection-4g:latest")
+root = Path(bento.path)
+
+for script in root.rglob("*.sh"):
+    content = script.read_bytes()
+
+    if b"\r\n" in content:
+        script.write_bytes(content.replace(b"\r\n", b"\n"))
+        print("Fixed:", script)
+    else:
+        print("Already LF:", script)
+'@ | python -
+```
+
+This converts CRLF line endings to LF in the generated Bento shell scripts without modifying the original project files.
+
+After applying the fix, build the Docker image:
+
+```powershell
+bentoml containerize anomaly-detection-4g:latest -t anomaly-4g:latest
+```
+
+**Note:** This is a workaround for Windows-specific line-ending issues. If a new Bento is generated, the conversion may need to be repeated.
+
+**Note:** If the output of `bentoml build` shows a different Bento name, replace `anomaly-detection-4g:latest` with the tag it reports. The `-t` option assigns the name `anomaly-4g:latest` to the Docker image.
+
+The Bento packages the latest model version specified in `bentofile.yaml`. To pin a specific version, replace `:latest` in the `models:` field with the tag printed during training.
+
+## Run the API Inside Docker
+
+```powershell
+docker run --rm --name anomaly-4g-api -p 3000:3000 anomaly-4g:latest serve
+```
+
+With the container running, open `http://localhost:3000` to access the API interface. 
+
+To stop the container, press Ctrl+C in the terminal where it is running.

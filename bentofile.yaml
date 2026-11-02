@@ -1,0 +1,11 @@
+# Build and package this BentoML REST API (inference only).
+service: "predict:service"
+include:
+  - "predict.py"
+models:
+  - "anomaly_detection_4g_lgbm:latest"
+python:
+  requirements_txt: "./requirements.txt"
+docker:
+  distro: debian
+  python_version: "3.9.0"

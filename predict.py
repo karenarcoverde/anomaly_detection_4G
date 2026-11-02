@@ -79,6 +79,7 @@ def add_predictions(
     features = prepare_features(
         test_data.to_dict(orient="records"), feature_names
     )
+    # The BentoML LightGBM model is a Booster; predict() returns probabilities.
     probabilities = model.predict(features)
     predicted_data = test_data.copy()
     predicted_data[PREDICTION_COLUMN] = (

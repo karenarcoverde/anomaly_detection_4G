@@ -118,7 +118,7 @@ def train_and_save(data_path: Path, model_name: str) -> str:
 
     saved_model = bentoml.lightgbm.save_model(
         model_name,
-        model,
+        model.booster_,  # BentoML LightGBM stores a native Booster.
         custom_objects={
             "threshold": threshold,
             "feature_names": list(features.columns),
